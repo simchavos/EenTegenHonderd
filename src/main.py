@@ -211,4 +211,4 @@ async def on_reaction_add(reaction, user):
             diction[user.id] = 'D'
 
 
-client.run('ODEwOTUyOTQ2MjU3NzU2MTgx.YCrIyQ.WhXFFk7XUwOUbwMDvhL3zD2GYKE')
+client.run('ODEwOTUyOTQ2MjU3NzU2MTgx.YCrIyQ.5_3LxcPy5lVGR4GakKudaZVclBM')
