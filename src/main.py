@@ -3,11 +3,19 @@ import discord
 
 client = discord.Client()
 
+# Parsing questions
 qanda = {}
-qanda[1] = ('Vraag 1', 'B', 'Antwoord 1')
-qanda[2] = ('Vraag 2', 'C', 'Antwoord 2')
-qanda[3] = ('Vraag 3', 'A', 'Antwoord 3')
-qanda[4] = ('Vraag 4', 'C', 'Antwoord 4')
+
+f = open("questions.txt", "r")
+lines = f.readlines()
+i = 1
+
+for line in lines:
+    lineq, lineno, linea = line.split("/")
+    qanda[i] = (lineq, lineno, linea)
+    i += 1
+
+# Necessary variables
 total_disqualified = set()
 een = 0
 q = ''
@@ -21,8 +29,8 @@ start_string = 'Reageer met een emoji als je meedoet!'
 cmd_channel = 0
 com_channel = 0
 
+
 # TODO
-# jeroen is uit de game; jeroen stemt niet maar zit nog in participants. vervolgens wordt er geprint 'de volgende kandidaat uit het spel: jeroen
 
 
 @client.event
@@ -44,6 +52,7 @@ async def on_message(message):
     if (message.author == client.user) & (message.content == start_string):
         await message.add_reaction('👍')
 
+    # My discord user id
     if message.author.id == 328140454170198026:
         if message.content == '!q':
             await handle_q()
@@ -55,6 +64,7 @@ async def on_message(message):
             await kies()
         elif message.content == '!start':
             cmd_channel = message.channel
+            # Should insert channel to send messages to:
             com_channel = message.guild.get_channel(810949778900779069)
             await com_channel.send(start_string)
         elif message.content == '!in':
@@ -118,13 +128,18 @@ async def handle_a():
     # Iedereen heeft het goed
     if len(disqualified) == 0:
         await com_channel.send('Niemand is uit het spel!')
-        await com_channel.send('Het goede antwoord was inderdaad ' + qanda[qint][1] + ': ' + qanda[qint][2])
+        await com_channel.send('**Het goede antwoord was inderdaad ' + qanda[qint][1] + ': ' + qanda[qint][2] + "**")
         return
 
     if (een in participants.difference(total_disqualified)) and (len(participants.difference(total_disqualified)) == 1):
         await com_channel.send('De speler heeft alle kandidaten verslagen!')
-        await com_channel.send('Het goede antwoord was ' + qanda[qint][1] + ': ' + qanda[qint][2])
-        stage = -1
+        await com_channel.send('**Het goede antwoord was ' + qanda[qint][1] + ': ' + qanda[qint][2] + "**")
+        return
+
+    if len(participants.difference(total_disqualified)) == 0:
+        await com_channel.send('Iedereen is uit het spel!')
+        total_disqualified = set()
+        return
 
     ret = 'De volgende kandidaten zijn uit het spel:'
 
@@ -135,11 +150,11 @@ async def handle_a():
 
     if een in disqualified:
         await com_channel.send('De speler, ' + '<@' + str(een) + '>, is uit het spel! Er moet een nieuwe speler '
-                                                                     'worden gekozen.')
+                                                                 'worden gekozen.')
         een = 0
         total_disqualified = set()
 
-    await com_channel.send('Het goede antwoord was ' + qanda[qint][1] + ': ' + qanda[qint][2])
+    await com_channel.send('**Het goede antwoord was ' + qanda[qint][1] + ': ' + qanda[qint][2] + "**")
 
 
 async def ingame():
@@ -171,7 +186,7 @@ async def kies():
 
 
 def get_disqualified():
-    global diction, qanda, qint, participants
+    global diction, qanda, qint, participants, total_disqualified
 
     local_participants = set()
     disqualified = set()
@@ -183,7 +198,7 @@ def get_disqualified():
 
     diction = {}
 
-    return disqualified.union(participants.difference(local_participants))
+    return disqualified.union(participants.difference(total_disqualified).difference(local_participants))
 
 
 @client.event
