@@ -55,6 +55,7 @@ async def on_message(message):
 
     if (message.author == client.user) & (message.content == start_string):
         await message.add_reaction('👍')
+        return
 
     # My discord user id
     if message.author.id == 328140454170198026:
