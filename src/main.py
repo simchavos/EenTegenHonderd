@@ -3,11 +3,19 @@ import discord
 
 client = discord.Client()
 
+# Parsing questions
 qanda = {}
-qanda[1] = ('Vraag 1', 'B', 'Antwoord 1')
-qanda[2] = ('Vraag 2', 'C', 'Antwoord 2')
-qanda[3] = ('Vraag 3', 'A', 'Antwoord 3')
-qanda[4] = ('Vraag 4', 'C', 'Antwoord 4')
+
+f = open("questions.txt", encoding='utf8')
+lines = f.readlines()
+i = 1
+
+for line in lines:
+    lineq, lineno, linea = line.split("/")
+    qanda[i] = (lineq, lineno, linea)
+    i += 1
+
+# Necessary variables
 total_disqualified = set()
 een = 0
 q = ''
@@ -15,15 +23,11 @@ qint = 0
 stage = -1
 diction = {}
 participants = set()
-start_string = 'Reageer met een emoji als je meedoet!'
+start_string = "If you haven't joined already, react with a 👍 if you want to join!"
 
 # NOT STATIC:
 cmd_channel = 0
 com_channel = 0
-
-# TODO
-# jeroen is uit de game; jeroen stemt niet maar zit nog in participants. vervolgens wordt er geprint 'de volgende kandidaat uit het spel: jeroen
-
 
 @client.event
 async def on_ready():
@@ -43,8 +47,10 @@ async def on_message(message):
 
     if (message.author == client.user) & (message.content == start_string):
         await message.add_reaction('👍')
+        return
 
-    if message.author.id == 328140454170198026:
+    #todo - Enter user id
+    if message.author.id == 0:
         if message.content == '!q':
             await handle_q()
         elif message.content == '!s':
@@ -55,10 +61,19 @@ async def on_message(message):
             await kies()
         elif message.content == '!start':
             cmd_channel = message.channel
-            com_channel = message.guild.get_channel(810949778900779069)
+            #todo - enter message channel
+            com_channel = message.guild.get_channel(0)
+
             await com_channel.send(start_string)
         elif message.content == '!in':
             await ingame()
+        elif message.content == '!bliep':
+            cmd_channel = message.channel
+            #todo enter message channel
+            com_channel = message.guild.get_channel(0)
+
+            await com_channel.send('Bloep!')
+            await cmd_channel.send('CMD')
 
 
 async def handle_q():
@@ -67,14 +82,19 @@ async def handle_q():
     Pre: stage == 0
     Post stage == 1
     """
-    global stage, q, qint
+    global stage, q, qint, een
+
+    if qint >= len(qanda):
+        await com_channel.send('All out of questions! The winner is <@' + str(een) + '>!')
+        print('Winner: ' + str(een))
+        return
 
     if een == 0:
-        await cmd_channel.send('Er is geen speler gekozen!')
+        await cmd_channel.send('No player has been chosen!')
         return
 
     if stage != 0:
-        await cmd_channel.send('Foute stage')
+        await cmd_channel.send('Wrong stage')
         return
 
     stage = 1
@@ -92,10 +112,10 @@ async def handle_s():
     global stage
 
     if stage != 1:
-        await cmd_channel.send('Foute stage')
+        await cmd_channel.send('Wrong stage')
         return
 
-    await com_channel.send('Alle antwoorden zijn binnen en geen nieuwe antwoorden worden meer geaccepteerd!')
+    await com_channel.send('All answers have been received and no new answers are accepted!')
     stage = 2
 
 
@@ -108,7 +128,7 @@ async def handle_a():
     global stage, total_disqualified, een
 
     if stage != 2:
-        await cmd_channel.send('Foute stage')
+        await cmd_channel.send('Wrong stage')
         return
 
     stage = 0
@@ -117,61 +137,89 @@ async def handle_a():
 
     # Iedereen heeft het goed
     if len(disqualified) == 0:
-        await com_channel.send('Niemand is uit het spel!')
-        await com_channel.send('Het goede antwoord was inderdaad ' + qanda[qint][1] + ': ' + qanda[qint][2])
+        await com_channel.send('Everyone was correct!')
+        await com_channel.send('**The correct answer was indeed ' + qanda[qint][1] + ': ' + qanda[qint][2] + "**")
+        await com_channel.send('_ _')
         return
 
+    # Speler heeft het alleen goed
     if (een in participants.difference(total_disqualified)) and (len(participants.difference(total_disqualified)) == 1):
-        await com_channel.send('De speler heeft alle kandidaten verslagen!')
-        await com_channel.send('Het goede antwoord was ' + qanda[qint][1] + ': ' + qanda[qint][2])
-        stage = -1
+        await com_channel.send('The candidate, <@' + str(een) + '>, has beaten all players!')
+        print('Winnaar: ' + str(een))
+        await com_channel.send('**The correct answer was ' + qanda[qint][1] + ': ' + qanda[qint][2] + "**")
+        await com_channel.send('_ _')
+        await reset()
+        return
 
-    ret = 'De volgende kandidaten zijn uit het spel:'
+    # Iedereen heeft het fout
+    if len(participants.difference(total_disqualified)) == 0:
+        await com_channel.send('Everyone is out of the game!')
+        await com_channel.send('_ _')
+        await reset()
+        return
+
+    ret = 'The following players are out of the game:'
 
     for disq in disqualified:
         ret += ' <@' + str(disq) + '>,'
 
     await com_channel.send(ret[:-1] + '!')
 
-    if een in disqualified:
-        await com_channel.send('De speler, ' + '<@' + str(een) + '>, is uit het spel! Er moet een nieuwe speler '
-                                                                     'worden gekozen.')
-        een = 0
-        total_disqualified = set()
+    if (een in disqualified) and (len(participants.difference(total_disqualified)) == 1):
+        await com_channel.send('The winner is <@' + str(participants.difference(total_disqualified).pop()) + '>!')
+        print('Winnaar: ' + str(participants.difference(total_disqualified).pop()))
+        await com_channel.send('**The correct answer was ' + qanda[qint][1] + ': ' + qanda[qint][2] + "**")
+        await com_channel.send('_ _')
+        await reset()
+        return
 
-    await com_channel.send('Het goede antwoord was ' + qanda[qint][1] + ': ' + qanda[qint][2])
+    if een in disqualified:
+        await com_channel.send('The candidate, ' + '<@' + str(een) + '>, is out of the game!')
+        await kies()
+
+    await com_channel.send('**The correct answer was ' + qanda[qint][1] + ': ' + qanda[qint][2] + "**")
+    await com_channel.send('_ _')
+
+
+async def reset():
+    global een, total_disqualified, stage
+
+    een = 0
+    total_disqualified = set()
+    stage = -1
+    await com_channel.send(start_string)
 
 
 async def ingame():
     if len(participants.difference(total_disqualified)) == 0:
-        await com_channel.send('Niemand zit in het spel!')
+        await com_channel.send('No one is in the game!')
         return
 
-    ret = 'De volgende spelers zitten nog in het spel:'
+    ret = 'The following players are still in the game:'
 
     for speler in participants.difference(total_disqualified):
         ret += ' <@' + str(speler) + '>,'
 
     ret = ret[:-1]
 
-    await com_channel.send(ret + '!')
+    await com_channel.send(ret + '! The candidate is <@' + str(een) + '>!')
 
 
 async def kies():
     global een, stage
 
-    if len(participants) == 0:
+    if len(participants.difference(total_disqualified)) == 0:
         await cmd_channel.send('Er zijn geen spelers!')
         return
 
     stage = 0
-    een = random.choice(tuple(participants))
+    een = random.choice(tuple(participants.difference(total_disqualified)))
 
-    await com_channel.send('De nieuwe kandidaat is <@' + str(een) + '>!')
+    await com_channel.send('The new candidate is <@' + str(een) + '>!')
 
 
 def get_disqualified():
-    global diction, qanda, qint, participants
+    global diction, qanda, qint, participants, total_disqualified
 
     local_participants = set()
     disqualified = set()
@@ -183,7 +231,7 @@ def get_disqualified():
 
     diction = {}
 
-    return disqualified.union(participants.difference(local_participants))
+    return disqualified.union(participants.difference(total_disqualified).difference(local_participants))
 
 
 @client.event
@@ -210,5 +258,5 @@ async def on_reaction_add(reaction, user):
         elif reaction.emoji == '🇩':
             diction[user.id] = 'D'
 
-
-client.run('ODEwOTUyOTQ2MjU3NzU2MTgx.YCrIyQ.WhXFFk7XUwOUbwMDvhL3zD2GYKE')
+#todo - Enter private bot key
+client.run('private key')
