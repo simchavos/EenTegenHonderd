@@ -49,8 +49,8 @@ async def on_message(message):
         await message.add_reaction('👍')
         return
 
-    # My discord user id
-    if message.author.id == 328140454170198026:
+    #todo - Enter user id
+    if message.author.id == 0:
         if message.content == '!q':
             await handle_q()
         elif message.content == '!s':
@@ -61,16 +61,16 @@ async def on_message(message):
             await kies()
         elif message.content == '!start':
             cmd_channel = message.channel
-            #824636530550374400
-            com_channel = message.guild.get_channel(824636530550374400)
+            #todo - enter message channel
+            com_channel = message.guild.get_channel(0)
 
             await com_channel.send(start_string)
         elif message.content == '!in':
             await ingame()
         elif message.content == '!bliep':
             cmd_channel = message.channel
-            #824636530550374400
-            com_channel = message.guild.get_channel(824636530550374400)
+            #todo enter message channel
+            com_channel = message.guild.get_channel(0)
 
             await com_channel.send('Bloep!')
             await cmd_channel.send('CMD')
@@ -86,15 +86,15 @@ async def handle_q():
 
     if qint >= len(qanda):
         await com_channel.send('All out of questions! The winner is <@' + str(een) + '>!')
-        print('Winnaar: ' + str(een))
+        print('Winner: ' + str(een))
         return
 
     if een == 0:
-        await cmd_channel.send('Er is geen speler gekozen!')
+        await cmd_channel.send('No player has been chosen!')
         return
 
     if stage != 0:
-        await cmd_channel.send('Foute stage')
+        await cmd_channel.send('Wrong stage')
         return
 
     stage = 1
@@ -112,7 +112,7 @@ async def handle_s():
     global stage
 
     if stage != 1:
-        await cmd_channel.send('Foute stage')
+        await cmd_channel.send('Wrong stage')
         return
 
     await com_channel.send('All answers have been received and no new answers are accepted!')
@@ -128,7 +128,7 @@ async def handle_a():
     global stage, total_disqualified, een
 
     if stage != 2:
-        await cmd_channel.send('Foute stage')
+        await cmd_channel.send('Wrong stage')
         return
 
     stage = 0
@@ -258,5 +258,5 @@ async def on_reaction_add(reaction, user):
         elif reaction.emoji == '🇩':
             diction[user.id] = 'D'
 
-
-client.run('ODEwOTUyOTQ2MjU3NzU2MTgx.YCrIyQ.5_3LxcPy5lVGR4GakKudaZVclBM')
+#todo - Enter private bot key
+client.run('private key')
