@@ -23,19 +23,11 @@ qint = 0
 stage = -1
 diction = {}
 participants = set()
-start_string = "If you haven't joined already, react with an emoji to join!"
+start_string = "If you haven't joined already, react with a 👍 if you want to join!"
 
 # NOT STATIC:
 cmd_channel = 0
 com_channel = 0
-
-
-# TODO
-# Bij TV programma als de één het fout heeft, wordt uit de nieuwe mensen nieuwe kandidaat
-# gekozen.
-
-# Kimberly doet niet mee maar geeft fout antwoord
-# Verwijder kandidaat uit de game !in
 
 @client.event
 async def on_ready():
@@ -69,11 +61,19 @@ async def on_message(message):
             await kies()
         elif message.content == '!start':
             cmd_channel = message.channel
-            # Should insert channel to send messages to:
-            com_channel = message.guild.get_channel(820375100116566036)
+            #824636530550374400
+            com_channel = message.guild.get_channel(824636530550374400)
+
             await com_channel.send(start_string)
         elif message.content == '!in':
             await ingame()
+        elif message.content == '!bliep':
+            cmd_channel = message.channel
+            #824636530550374400
+            com_channel = message.guild.get_channel(824636530550374400)
+
+            await com_channel.send('Bloep!')
+            await cmd_channel.send('CMD')
 
 
 async def handle_q():
@@ -139,6 +139,7 @@ async def handle_a():
     if len(disqualified) == 0:
         await com_channel.send('Everyone was correct!')
         await com_channel.send('**The correct answer was indeed ' + qanda[qint][1] + ': ' + qanda[qint][2] + "**")
+        await com_channel.send('_ _')
         return
 
     # Speler heeft het alleen goed
@@ -146,12 +147,14 @@ async def handle_a():
         await com_channel.send('The candidate, <@' + str(een) + '>, has beaten all players!')
         print('Winnaar: ' + str(een))
         await com_channel.send('**The correct answer was ' + qanda[qint][1] + ': ' + qanda[qint][2] + "**")
+        await com_channel.send('_ _')
         await reset()
         return
 
     # Iedereen heeft het fout
     if len(participants.difference(total_disqualified)) == 0:
         await com_channel.send('Everyone is out of the game!')
+        await com_channel.send('_ _')
         await reset()
         return
 
@@ -163,9 +166,10 @@ async def handle_a():
     await com_channel.send(ret[:-1] + '!')
 
     if (een in disqualified) and (len(participants.difference(total_disqualified)) == 1):
-        await com_channel.send('The winner is <@' + str(participants.difference(disqualified).pop()) + '>!')
-        print('Winnaar: ' + str(participants.difference(disqualified).pop()))
+        await com_channel.send('The winner is <@' + str(participants.difference(total_disqualified).pop()) + '>!')
+        print('Winnaar: ' + str(participants.difference(total_disqualified).pop()))
         await com_channel.send('**The correct answer was ' + qanda[qint][1] + ': ' + qanda[qint][2] + "**")
+        await com_channel.send('_ _')
         await reset()
         return
 
@@ -174,6 +178,7 @@ async def handle_a():
         await kies()
 
     await com_channel.send('**The correct answer was ' + qanda[qint][1] + ': ' + qanda[qint][2] + "**")
+    await com_channel.send('_ _')
 
 
 async def reset():
